@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Registro de horas · Jorge</title>
+<style>
+  :root{
+    color-scheme: light;
+    --plane:#f9f9f7; --surface:#fcfcfb;
+    --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
+    --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10);
+    --shadow:0 1px 2px rgba(11,11,11,.06),0 8px 24px rgba(11,11,11,.08);
+    --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100;
+    --s5:#e87ba4; --s6:#008300; --s7:#4a3aa7; --s8:#e34948; --other:#898781;
+    --accent:#2a78d6;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:where(:not([data-theme="light"])){
+      color-scheme: dark;
+      --plane:#0d0d0d; --surface:#1a1a19;
+      --ink:#fff; --ink2:#c3c2b7; --muted:#898781;
+      --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.5);
+      --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
+      --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767; --other:#898781;
+      --accent:#3987e5;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --plane:#0d0d0d; --surface:#1a1a19;
+    --ink:#fff; --ink2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.5);
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
+    --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767; --other:#898781;
+    --accent:#3987e5;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--plane); color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+    font-size:15px; line-height:1.45;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:20px 20px 80px}
+  header.top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+  h1{font-size:20px;margin:0;letter-spacing:-.01em}
+  h1 .sub{color:var(--muted);font-weight:500;font-size:14px;margin-left:8px}
+  .spacer{flex:1}
+  .btn{
+    appearance:none;border:1px solid var(--border);background:var(--surface);
+    color:var(--ink);border-radius:9px;padding:7px 12px;font-size:13.5px;font-weight:600;
+    cursor:pointer;box-shadow:var(--shadow);display:inline-flex;align-items:center;gap:6px;
+  }
+  .btn:hover{border-color:var(--axis)}
+  .btn.ghost{box-shadow:none;background:transparent}
+  .btn.small{padding:4px 9px;font-size:12.5px}
+  .btn.icon{padding:6px 10px;font-size:16px;line-height:1}
+  input,select{font-family:inherit;font-size:14px;color:var(--ink);background:var(--surface);
+    border:1px solid var(--border);border-radius:8px;padding:6px 9px}
+  label.field{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--ink2)}
+  label.field input{width:52px;text-align:center}
+
+  .layout{display:grid;grid-template-columns:1.35fr 1fr;gap:20px;align-items:start}
+  @media(max-width:920px){.layout{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+    box-shadow:var(--shadow);padding:16px}
+  .card h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);
+    margin:0 0 12px;font-weight:700}
+
+  /* calendar */
+  .calbar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .calbar .month{font-size:16px;font-weight:700;min-width:150px;text-align:center}
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+  .dow{font-size:11px;color:var(--muted);text-align:center;font-weight:700;text-transform:uppercase;padding-bottom:2px}
+  .day{aspect-ratio:1/1;border:1px solid var(--grid);border-radius:10px;padding:5px;cursor:pointer;
+    display:flex;flex-direction:column;gap:3px;background:var(--surface);position:relative;overflow:hidden;min-height:58px}
+  .day:hover{border-color:var(--accent)}
+  .day.out{opacity:.32;cursor:default;pointer-events:none}
+  .day.today{outline:2px solid var(--accent);outline-offset:-2px}
+  .day .num{font-size:12px;font-weight:600;color:var(--ink2);align-self:flex-end}
+  .day.weekend .num{color:var(--muted)}
+  .day .dots{display:flex;flex-wrap:wrap;gap:3px;margin-top:auto}
+  .day .dot{width:100%;height:5px;border-radius:3px}
+  .day .mini{font-size:9.5px;line-height:1.15;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .day .empty{color:var(--grid);font-size:16px;margin:auto}
+
+  /* editor popover */
+  .pop{position:fixed;inset:0;background:rgba(0,0,0,.28);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+  .pop.open{display:flex}
+  .pop .sheet{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);
+    width:min(560px,100%);max-height:86vh;display:flex;flex-direction:column}
+  .pop .sheet h3{margin:0;padding:16px 18px;font-size:16px;border-bottom:1px solid var(--border)}
+  .pop .sheet h3 span{color:var(--muted);font-weight:500;font-size:13px}
+  .chips{padding:14px 18px;overflow:auto;display:flex;flex-wrap:wrap;gap:8px}
+  .chip{border:1px solid var(--border);background:var(--plane);border-radius:999px;padding:6px 12px;font-size:13px;
+    cursor:pointer;display:inline-flex;align-items:center;gap:7px;font-weight:600;color:var(--ink2)}
+  .chip .sw{width:11px;height:11px;border-radius:3px;background:var(--muted)}
+  .chip.on{color:var(--ink);border-color:var(--axis)}
+  .chip.on .sw{box-shadow:0 0 0 2px var(--surface),0 0 0 3px currentColor}
+  .pop .foot{padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .pop .foot .hint{font-size:12px;color:var(--muted)}
+  .addrow{display:flex;gap:6px;flex:1;min-width:180px}
+  .addrow input{flex:1}
+
+  /* analytics */
+  .seg{display:inline-flex;border:1px solid var(--border);border-radius:9px;overflow:hidden}
+  .seg button{appearance:none;border:0;background:transparent;color:var(--ink2);padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer}
+  .seg button.on{background:var(--accent);color:#fff}
+  .periodrow{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+  .donut-wrap{display:flex;flex-direction:column;align-items:center;gap:4px}
+  .donut{position:relative;width:200px;height:200px}
+  .donut .center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+  .donut .center .big{font-size:26px;font-weight:700;letter-spacing:-.02em}
+  .donut .center .lab{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  table.leg{width:100%;border-collapse:collapse;margin-top:14px;font-size:13px}
+  table.leg th{text-align:right;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;padding:0 6px 6px;border-bottom:1px solid var(--grid)}
+  table.leg th:first-child{text-align:left}
+  table.leg td{padding:6px 6px;border-bottom:1px solid var(--grid);text-align:right;font-variant-numeric:tabular-nums}
+  table.leg td:first-child{text-align:left}
+  table.leg .nm{display:inline-flex;align-items:center;gap:8px;font-weight:600}
+  table.leg .sw{width:11px;height:11px;border-radius:3px;flex:none}
+  table.leg tr.total td{font-weight:700;border-bottom:0;border-top:2px solid var(--axis)}
+  .empty-note{color:var(--muted);font-size:13px;padding:26px 4px;text-align:center}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--plane);
+    padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:var(--shadow);opacity:0;transition:opacity .2s;pointer-events:none;z-index:80}
+  .toast.show{opacity:1}
+  .foothint{margin-top:26px;color:var(--muted);font-size:12px;text-align:center;line-height:1.6}
+  .toolbtns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  #syncChip{font-variant-numeric:tabular-nums}
+  #syncChip[data-mode="ok"]{color:#0ca30c;border-color:rgba(12,163,12,.35)}
+  #syncChip[data-mode="busy"]{color:var(--accent)}
+  #syncChip[data-mode="warn"]{color:#d03b3b;border-color:rgba(208,59,59,.4)}
+  #syncChip[data-mode="off"]{color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Registro de horas <span class="sub">Jorge · estimativo por proyecto</span></h1>
+    <div class="spacer"></div>
+    <label class="field">Horas/día
+      <input id="hpd" type="number" min="1" max="24" step="1" value="8" />
+    </label>
+    <div class="toolbtns">
+      <button class="btn ghost small" id="syncChip" title="Estado de sincronización con Google Drive">☁︎ <span id="syncTxt">…</span></button>
+      <button class="btn ghost small" id="btnTheme" title="Tema claro/oscuro">◐</button>
+      <button class="btn ghost small" id="btnExport">Exportar</button>
+      <button class="btn ghost small" id="btnImport">Importar</button>
+      <input type="file" id="fileImport" accept="application/json" hidden />
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- CALENDAR -->
+    <section class="card">
+      <div class="calbar">
+        <button class="btn icon ghost" id="prevM">‹</button>
+        <div class="month" id="monthLbl"></div>
+        <button class="btn icon ghost" id="nextM">›</button>
+        <div class="spacer"></div>
+        <button class="btn small ghost" id="todayBtn">Hoy</button>
+      </div>
+      <div class="cal" id="dow"></div>
+      <div class="cal" id="cal" style="margin-top:6px"></div>
+      <div class="foothint" style="text-align:left;margin-top:14px">
+        Tocá un día y marcá en qué proyecto(s) estuviste. Si marcás varios, el día se reparte en partes iguales.
+      </div>
+    </section>
+
+    <!-- ANALYTICS -->
+    <section class="card">
+      <h2>División de proyectos</h2>
+      <div class="periodrow">
+        <div class="seg" id="seg">
+          <button data-p="month" class="on">Mes</button>
+          <button data-p="week">Semana</button>
+        </div>
+        <select id="weekSel" style="display:none"></select>
+        <div class="spacer"></div>
+        <button class="btn small ghost" id="btnCopy">Copiar resumen</button>
+      </div>
+      <div id="analytics"></div>
+    </section>
+  </div>
+
+  <div class="foothint">
+    Se guarda solo en este navegador (localStorage), en tu máquina. Sin internet. Usá <b>Exportar</b> para respaldar.
+  </div>
+</div>
+
+<!-- day editor -->
+<div class="pop" id="pop">
+  <div class="sheet">
+    <h3 id="popTitle"></h3>
+    <div class="chips" id="chips"></div>
+    <div class="foot">
+      <div class="addrow">
+        <input id="newProj" placeholder="Agregar proyecto nuevo…" />
+        <button class="btn small" id="addProj">Agregar</button>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn ghost small" id="clearDay">Vaciar día</button>
+      <button class="btn small" id="closePop">Listo</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+const PALETTE = ['s1','s2','s3','s4','s5','s6','s7','s8'];
+const SEED = ["3DAR.IO","ACCION","BANANA AIRWAYS","BLACK OPAL","BROTACIONES","BUNKER","DOG THERAPY","EYES ON YOU","FIFA","GOLF","GYMBRO","GloomyEyes","HEALTH","HIRAKU","MESSI","NATURIS","OPI","PROTAGONIST","QUEENS","RIVALIDAD","SKETCHBOOKS","STUDIO","THREEJS GAMES","TRIPS","VACACIONES GG"];
+const KEY = "registro_horas_v1";
+const MONTHS = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const DOW = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+
+// ---------- state ----------
+let data = load();
+function load(){
+  try{
+    const raw = JSON.parse(localStorage.getItem(KEY));
+    if(raw && raw.projects) return raw;
+  }catch(e){}
+  return { hoursPerDay:8,
+    projects: SEED.map((n,i)=>({id:'p'+i, name:n})),
+    days:{} };
+}
+function save(opts){ // opts.remote:false when applying a pull (don't re-push)
+  if(!opts || opts.stamp!==false){ data.updatedAt = Date.now(); }
+  localStorage.setItem(KEY, JSON.stringify(data));
+  if(!opts || opts.remote!==false){ Sync.schedulePush(); }
+}
+
+// stable color index by project position
+function projColor(id){
+  const i = data.projects.findIndex(p=>p.id===id);
+  return i<0 ? 'other' : PALETTE[i % PALETTE.length];
+}
+function projName(id){ const p=data.projects.find(p=>p.id===id); return p?p.name:'(borrado)'; }
+function cssVar(v){ return getComputedStyle(document.documentElement).getPropertyValue('--'+v).trim(); }
+
+// ---------- date helpers ----------
+const pad = n => String(n).padStart(2,'0');
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+function parseISO(s){ const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
+// Monday=0 index
+function dowMon(d){ return (d.getDay()+6)%7; }
+
+let view = new Date(); view.setDate(1);
+let period = 'month';
+let selectedWeekStart = null;
+
+// ---------- calendar render ----------
+const dowEl = document.getElementById('dow');
+dowEl.innerHTML = DOW.map(d=>`<div class="dow">${d}</div>`).join('');
+
+function render(){
+  document.getElementById('hpd').value = data.hoursPerDay;
+  document.getElementById('monthLbl').textContent = `${MONTHS[view.getMonth()]} ${view.getFullYear()}`;
+  renderCal();
+  renderAnalytics();
+  save();
+}
+
+function renderCal(){
+  const cal = document.getElementById('cal');
+  const y=view.getFullYear(), m=view.getMonth();
+  const first=new Date(y,m,1);
+  const start=new Date(first); start.setDate(1-dowMon(first));
+  const todayStr = iso(new Date());
+  let html='';
+  for(let i=0;i<42;i++){
+    const d=new Date(start); d.setDate(start.getDate()+i);
+    const inMonth = d.getMonth()===m;
+    const key = iso(d);
+    const wknd = d.getDay()===0||d.getDay()===6;
+    const list = data.days[key]||[];
+    const dots = list.map(id=>`<div class="dot" style="background:var(--${projColor(id)})" title="${projName(id)}"></div>`).join('');
+    const labels = list.slice(0,3).map(id=>`<div class="mini">${projName(id)}</div>`).join('') + (list.length>3?`<div class="mini">+${list.length-3}</div>`:'');
+    html += `<div class="day ${inMonth?'':'out'} ${wknd?'weekend':''} ${key===todayStr?'today':''}" data-key="${key}">
+      <div class="num">${d.getDate()}</div>
+      ${list.length? `<div class="dots">${dots}</div>${labels}` : '<div class="empty">+</div>'}
+    </div>`;
+  }
+  cal.innerHTML=html;
+  cal.querySelectorAll('.day:not(.out)').forEach(el=>{
+    el.onclick=()=>openDay(el.dataset.key);
+  });
+}
+
+// ---------- day editor ----------
+let editKey=null;
+function openDay(key){
+  editKey=key;
+  const d=parseISO(key);
+  document.getElementById('popTitle').innerHTML =
+    `${DOW[dowMon(d)]} ${d.getDate()} ${MONTHS[d.getMonth()]} <span>· marcá los proyectos del día</span>`;
+  renderChips();
+  document.getElementById('pop').classList.add('open');
+}
+function renderChips(){
+  const list = data.days[editKey]||[];
+  document.getElementById('chips').innerHTML = data.projects.map(p=>{
+    const on = list.includes(p.id);
+    return `<div class="chip ${on?'on':''}" data-id="${p.id}" style="${on?`color:var(--${projColor(p.id)})`:''}">
+      <span class="sw" style="${on?`background:var(--${projColor(p.id)})`:''}"></span>${p.name}</div>`;
+  }).join('');
+  document.querySelectorAll('#chips .chip').forEach(c=>{
+    c.onclick=()=>{
+      const id=c.dataset.id;
+      let l=data.days[editKey]||[];
+      if(l.includes(id)) l=l.filter(x=>x!==id); else l=[...l,id];
+      if(l.length) data.days[editKey]=l; else delete data.days[editKey];
+      renderChips(); renderCal(); renderAnalytics(); save();
+    };
+  });
+}
+document.getElementById('closePop').onclick=()=>document.getElementById('pop').classList.remove('open');
+document.getElementById('pop').onclick=e=>{ if(e.target.id==='pop') document.getElementById('pop').classList.remove('open'); };
+document.getElementById('clearDay').onclick=()=>{ delete data.days[editKey]; renderChips(); renderCal(); renderAnalytics(); save(); };
+document.getElementById('addProj').onclick=addProj;
+document.getElementById('newProj').onkeydown=e=>{ if(e.key==='Enter') addProj(); };
+function addProj(){
+  const inp=document.getElementById('newProj');
+  const name=inp.value.trim(); if(!name) return;
+  if(data.projects.some(p=>p.name.toLowerCase()===name.toLowerCase())){ toast('Ese proyecto ya existe'); return; }
+  const id='p'+Date.now();
+  data.projects.push({id,name});
+  // auto-add to current day
+  const l=data.days[editKey]||[]; l.push(id); data.days[editKey]=l;
+  inp.value=''; renderChips(); renderCal(); renderAnalytics(); save();
+}
+
+// ---------- analytics ----------
+function weeksOfView(){
+  // list of {start(Date), label} covering the visible month (weeks that contain any day of the month)
+  const y=view.getFullYear(), m=view.getMonth();
+  const first=new Date(y,m,1);
+  let ws=new Date(first); ws.setDate(1-dowMon(first));
+  const last=new Date(y,m+1,0);
+  const weeks=[];
+  while(ws<=last){
+    const we=new Date(ws); we.setDate(ws.getDate()+6);
+    weeks.push({start:new Date(ws),
+      label:`${ws.getDate()}/${ws.getMonth()+1} – ${we.getDate()}/${we.getMonth()+1}`});
+    ws=new Date(ws); ws.setDate(ws.getDate()+7);
+  }
+  return weeks;
+}
+function keysInRange(start,end){ // inclusive Date range → array of iso strings that have data
+  const out=[];
+  for(const k in data.days){ const d=parseISO(k); if(d>=start&&d<=end) out.push(k); }
+  return out;
+}
+function currentRange(){
+  if(period==='week'){
+    const ws=selectedWeekStart||weeksOfView()[0].start;
+    const we=new Date(ws); we.setDate(ws.getDate()+6);
+    return [ws,we];
+  }
+  const y=view.getFullYear(), m=view.getMonth();
+  return [new Date(y,m,1), new Date(y,m+1,0)];
+}
+function aggregate(){
+  const [s,e]=currentRange();
+  const totals={}; let totalHours=0; const workedDays=new Set();
+  const hpd=data.hoursPerDay;
+  for(const k of keysInRange(s,e)){
+    const l=data.days[k]; if(!l||!l.length) continue;
+    workedDays.add(k);
+    const per=hpd/l.length;
+    for(const id of l){ totals[id]=(totals[id]||0)+per; totalHours+=per; }
+  }
+  let rows=Object.entries(totals).map(([id,h])=>({id,name:projName(id),color:projColor(id),hours:h,days:h/hpd}))
+    .sort((a,b)=>b.hours-a.hours);
+  // fold beyond 8 into "Otros"
+  if(rows.length>8){
+    const keep=rows.slice(0,7);
+    const rest=rows.slice(7);
+    const oh=rest.reduce((a,r)=>a+r.hours,0);
+    keep.push({id:'__other',name:`Otros (${rest.length})`,color:'other',hours:oh,days:oh/hpd});
+    rows=keep;
+  }
+  return {rows,totalHours,workedDays:workedDays.size};
+}
+function renderAnalytics(){
+  // week selector
+  const wsel=document.getElementById('weekSel');
+  if(period==='week'){
+    const weeks=weeksOfView();
+    if(!selectedWeekStart || !weeks.some(w=>iso(w.start)===iso(selectedWeekStart)))
+      selectedWeekStart=weeks[0].start;
+    wsel.style.display='';
+    wsel.innerHTML=weeks.map(w=>`<option value="${iso(w.start)}" ${iso(w.start)===iso(selectedWeekStart)?'selected':''}>Semana ${w.label}</option>`).join('');
+  } else wsel.style.display='none';
+
+  const {rows,totalHours,workedDays}=aggregate();
+  const el=document.getElementById('analytics');
+  if(!rows.length){
+    el.innerHTML=`<div class="empty-note">Sin registros en este ${period==='week'?'semana':'mes'}.<br>Marcá algún día en el calendario.</div>`;
+    return;
+  }
+  el.innerHTML = donutSVG(rows,totalHours,workedDays) + legendTable(rows,totalHours,workedDays);
+}
+function donutSVG(rows,total,workedDays){
+  const R=90,r=56,cx=100,cy=100,C=2*Math.PI;
+  let acc=0, segs='', labels='';
+  for(const row of rows){
+    const frac=row.hours/total;
+    const a0=acc*C - Math.PI/2, a1=(acc+frac)*C - Math.PI/2;
+    const large=frac>0.5?1:0;
+    const x0=cx+R*Math.cos(a0), y0=cy+R*Math.sin(a0);
+    const x1=cx+R*Math.cos(a1), y1=cy+R*Math.sin(a1);
+    const xi1=cx+r*Math.cos(a1), yi1=cy+r*Math.sin(a1);
+    const xi0=cx+r*Math.cos(a0), yi0=cy+r*Math.sin(a0);
+    segs+=`<path d="M${x0} ${y0} A${R} ${R} 0 ${large} 1 ${x1} ${y1} L${xi1} ${yi1} A${r} ${r} 0 ${large} 0 ${xi0} ${yi0} Z"
+      fill="var(--${row.color})" stroke="var(--surface)" stroke-width="2"><title>${row.name}: ${row.hours.toFixed(1)}h (${Math.round(frac*100)}%)</title></path>`;
+    if(frac>=0.08){
+      const am=(acc+frac/2)*C - Math.PI/2, lr=(R+r)/2;
+      labels+=`<text x="${cx+lr*Math.cos(am)}" y="${cy+lr*Math.sin(am)}" text-anchor="middle" dominant-baseline="central"
+        font-size="12" font-weight="700" fill="#fff" style="paint-order:stroke;stroke:rgba(0,0,0,.25);stroke-width:2px">${Math.round(frac*100)}%</text>`;
+    }
+    acc+=frac;
+  }
+  return `<div class="donut-wrap"><div class="donut"><svg viewBox="0 0 200 200" width="200" height="200">${segs}${labels}</svg>
+    <div class="center"><div class="big">${total.toFixed(0)}h</div><div class="lab">${workedDays} día${workedDays===1?'':'s'}</div></div></div></div>`;
+}
+function legendTable(rows,total,workedDays){
+  let body=rows.map(r=>`<tr>
+    <td><span class="nm"><span class="sw" style="background:var(--${r.color})"></span>${r.name}</span></td>
+    <td>${r.days.toFixed(1)}</td>
+    <td>${r.hours.toFixed(1)}h</td>
+    <td>${Math.round(r.hours/total*100)}%</td></tr>`).join('');
+  return `<table class="leg">
+    <thead><tr><th>Proyecto</th><th>Días</th><th>Horas</th><th>%</th></tr></thead>
+    <tbody>${body}
+    <tr class="total"><td>Total</td><td>${(total/data.hoursPerDay).toFixed(1)}</td><td>${total.toFixed(1)}h</td><td>100%</td></tr>
+    </tbody></table>`;
+}
+
+// ---------- controls ----------
+document.getElementById('prevM').onclick=()=>{ view.setMonth(view.getMonth()-1); selectedWeekStart=null; render(); };
+document.getElementById('nextM').onclick=()=>{ view.setMonth(view.getMonth()+1); selectedWeekStart=null; render(); };
+document.getElementById('todayBtn').onclick=()=>{ view=new Date(); view.setDate(1); selectedWeekStart=null; render(); };
+document.getElementById('hpd').onchange=e=>{ data.hoursPerDay=Math.max(1,Math.min(24,+e.target.value||8)); render(); };
+document.getElementById('seg').querySelectorAll('button').forEach(b=>{
+  b.onclick=()=>{ period=b.dataset.p; document.querySelectorAll('#seg button').forEach(x=>x.classList.toggle('on',x===b)); renderAnalytics(); };
+});
+document.getElementById('weekSel').onchange=e=>{ selectedWeekStart=parseISO(e.target.value); renderAnalytics(); };
+
+document.getElementById('btnCopy').onclick=()=>{
+  const {rows,totalHours,workedDays}=aggregate();
+  const [s,e]=currentRange();
+  const head = period==='week'
+    ? `Semana ${s.getDate()}/${s.getMonth()+1} – ${e.getDate()}/${e.getMonth()+1}`
+    : `${MONTHS[view.getMonth()]} ${view.getFullYear()}`;
+  let txt=`Registro de horas — ${head}\n(${workedDays} días trabajados · ${totalHours.toFixed(1)}h · ${data.hoursPerDay}h/día)\n\n`;
+  txt+=rows.map(r=>`• ${r.name}: ${r.days.toFixed(1)} días (${r.hours.toFixed(1)}h, ${Math.round(r.hours/totalHours*100)}%)`).join('\n');
+  navigator.clipboard.writeText(txt).then(()=>toast('Resumen copiado')).catch(()=>toast('No se pudo copiar'));
+};
+
+// theme
+document.getElementById('btnTheme').onclick=()=>{
+  const cur=document.documentElement.getAttribute('data-theme');
+  const next = cur==='dark'?'light':(cur==='light'?'':'dark');
+  if(next) document.documentElement.setAttribute('data-theme',next); else document.documentElement.removeAttribute('data-theme');
+  localStorage.setItem(KEY+'_theme',next);
+  render();
+};
+const savedTheme=localStorage.getItem(KEY+'_theme');
+if(savedTheme) document.documentElement.setAttribute('data-theme',savedTheme);
+
+// export / import
+document.getElementById('btnExport').onclick=()=>{
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`registro-horas-${iso(new Date())}.json`; a.click();
+  toast('Respaldo descargado');
+};
+document.getElementById('btnImport').onclick=()=>document.getElementById('fileImport').click();
+document.getElementById('fileImport').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=()=>{ try{ const d=JSON.parse(rd.result); if(d.projects&&d.days){ data=d; save(); render(); toast('Datos importados'); } else toast('Archivo inválido'); }catch(err){ toast('Archivo inválido'); } };
+  rd.readAsText(f);
+};
+
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),1800); }
+
+// ---------- Google Drive sync (only when running as a claude.ai Artifact) ----------
+const Sync = (function(){
+  const FILE = 'registro-horas-data.json';
+  const FOLDER = 'Registro de Horas (datos)';
+  let mcp = null, server = null, folderId = null;
+  let ready = false, pushTimer = null, pushing = false, dirty = false;
+
+  const chip = document.getElementById('syncChip');
+  const txt = document.getElementById('syncTxt');
+  function status(label, mode){ // mode: ok|busy|off|warn
+    txt.textContent = label;
+    chip.style.opacity = mode==='off' ? .6 : 1;
+    chip.dataset.mode = mode;
+    chip.onclick = (mode==='warn') ? ()=>toast('Reconectá Google Drive en claude.ai › Ajustes › Conectores') : null;
+    chip.style.cursor = (mode==='warn') ? 'pointer' : 'default';
+  }
+  function b64ToStr(b64){ const bin=atob(b64); const b=Uint8Array.from(bin,c=>c.charCodeAt(0)); return new TextDecoder().decode(b); }
+
+  async function call(tool, input){
+    const r = await mcp.callTool(server, tool, input);
+    return r && r.payload;
+  }
+
+  async function resolveServer(){
+    const list = await mcp.listTools();
+    const srvs = (list && list.servers) || [];
+    // pick the connector that exposes our Drive tools
+    const hit = srvs.find(s => (s.tools||[]).some(t=>t.name==='search_files')
+                            && (s.tools||[]).some(t=>t.name==='create_file'));
+    return hit ? hit.server : (srvs.find(s=>/drive/i.test(s.server))||{}).server;
+  }
+
+  async function ensureFolder(){
+    try{
+      const q = `title = '${FOLDER}' and mimeType = 'application/vnd.google-apps.folder' and owner = 'me'`;
+      const res = await call('search_files', {query:q, excludeContentSnippets:true, pageSize:5});
+      const f = (res && res.files || [])[0];
+      if(f){ folderId = f.id; return; }
+      const made = await call('create_file', {title:FOLDER, mimeType:'application/vnd.google-apps.folder', contentMimeType:'application/vnd.google-apps.folder'});
+      folderId = made && made.id;
+    }catch(e){ folderId = null; } // fall back to root
+  }
+
+  async function pull(){
+    const q = `title = '${FILE}' and owner = 'me'`;
+    const res = await call('search_files', {query:q, excludeContentSnippets:true, pageSize:100});
+    const files = (res && res.files) || [];
+    if(!files.length) return null;
+    files.sort((a,b)=> new Date(b.modifiedTime) - new Date(a.modifiedTime));
+    const dl = await call('download_file_content', {fileId: files[0].id});
+    if(!dl || !dl.content) return null;
+    try{ return JSON.parse(b64ToStr(dl.content)); }catch(e){ return null; }
+  }
+
+  async function push(){
+    if(pushing){ dirty = true; return; }
+    pushing = true; status('Guardando…','busy');
+    try{
+      const body = JSON.stringify(data);
+      const input = {title:FILE, textContent:body, contentMimeType:'application/json', disableConversionToGoogleType:true};
+      if(folderId) input.parentId = folderId;
+      await call('create_file', input);
+      status('Sincronizado','ok');
+    }catch(e){ handleErr(e); }
+    finally{
+      pushing = false;
+      if(dirty){ dirty=false; schedulePush(); }
+    }
+  }
+
+  function schedulePush(){
+    if(!ready) return;
+    clearTimeout(pushTimer);
+    status('Cambios sin guardar…','busy');
+    pushTimer = setTimeout(push, 3500);
+  }
+  function flush(){ if(ready){ clearTimeout(pushTimer); push(); } }
+
+  function handleErr(e){
+    const code = e && e.code;
+    if(code==='needs_reauth' || code==='server_not_connected'){ status('Reconectar Drive','warn'); }
+    else if(code==='not_granted' || code==='capability_disabled' || code==='capability_removed'){ status('Local','off'); ready=false; }
+    else if(code==='server_unavailable' || code==='rate_limited'){ status('Reintentando…','busy'); setTimeout(()=>{ if(ready) push(); }, 6000); }
+    else { status('Error de sync','warn'); }
+  }
+
+  async function init(){
+    if(typeof window==='undefined' || !window.claude || !window.claude.mcp){
+      status('Local (sin nube)','off'); return; // running as a plain local file
+    }
+    mcp = window.claude.mcp;
+    status('Conectando…','busy');
+    try{
+      server = await resolveServer();
+      if(!server){ status('Sin Drive','off'); return; }
+      const remote = await pull();
+      if(remote && remote.projects){
+        const localU = data.updatedAt||0, remoteU = remote.updatedAt||0;
+        if(remoteU > localU){ data = remote; save({remote:false, stamp:false}); render(); }
+      }
+      await ensureFolder();
+      ready = true;
+      status('Sincronizado','ok');
+      // if local was ahead of (or absent from) remote, push our copy up
+      if(!remote || (data.updatedAt||0) > (remote.updatedAt||0)) schedulePush();
+      window.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') flush(); });
+      window.addEventListener('beforeunload', flush);
+    }catch(e){ handleErr(e); }
+  }
+  return { init, schedulePush, flush };
+})();
+
+render();
+Sync.init();
+</script>
+</body>
+</html>
